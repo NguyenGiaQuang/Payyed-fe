@@ -1,25 +1,60 @@
-import React from "react";
-import { Link } from "react-router-dom";
+// src/components/layout/DashboardHeader.jsx
+import React, { useState } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { logout } from "../../utils/auth";
+import logo from "../../assets/images/logo.png";
 
 const DashboardHeader = ({ active = "dashboard" }) => {
+    const navigate = useNavigate();
+
+    const [langOpen, setLangOpen] = useState(false);
+    const [notifOpen, setNotifOpen] = useState(false);
+    const [profileOpen, setProfileOpen] = useState(false);
+
+    const handleLogout = (e) => {
+        e.preventDefault();
+        logout();
+        navigate("/login");
+    };
+
+    const toggleLang = (e) => {
+        e.preventDefault();
+        setLangOpen((v) => !v);
+        setNotifOpen(false);
+        setProfileOpen(false);
+    };
+
+    const toggleNotif = (e) => {
+        e.preventDefault();
+        setNotifOpen((v) => !v);
+        setLangOpen(false);
+        setProfileOpen(false);
+    };
+
+    const toggleProfile = (e) => {
+        e.preventDefault();
+        setProfileOpen((v) => !v);
+        setLangOpen(false);
+        setNotifOpen(false);
+    };
+
     return (
         <header id="header">
             <div className="container">
                 <div className="header-row">
-                    {/* Logo + Menu chính */}
+                    {/* LEFT: logo + main menu */}
                     <div className="header-column justify-content-start">
                         {/* Logo */}
                         <div className="logo me-3">
                             <Link className="d-flex" to="/dashboard" title="Payyed">
-                                <img src="/images/logo.png" alt="Payyed" />
+                                <img src={logo} alt="Payyed" />
                             </Link>
                         </div>
 
-                        {/* Nút toggle mobile */}
+                        {/* Mobile toggle (giữ nguyên, nếu sau dùng) */}
                         <button
                             className="navbar-toggler"
                             type="button"
-                            data-bs-toggle="collapse"
                             data-bs-target="#header-nav"
                         >
                             <span></span>
@@ -27,170 +62,199 @@ const DashboardHeader = ({ active = "dashboard" }) => {
                             <span></span>
                         </button>
 
-                        {/* Menu chính */}
+                        {/* Primary navigation */}
                         <nav className="primary-menu navbar navbar-expand-lg">
-                            <div id="header-nav" className="collapse navbar-collapse">
+                            <div id="header-nav" className="collapse navbar-collapse show">
                                 <ul className="navbar-nav me-auto">
                                     <li className={active === "dashboard" ? "active" : ""}>
-                                        <Link to="/dashboard">Tổng quan</Link>
+                                        <NavLink to="/dashboard" className="nav-link">
+                                            Dashboard
+                                        </NavLink>
                                     </li>
-
                                     <li className={active === "transactions" ? "active" : ""}>
-                                        <Link to="/transactions">Giao dịch</Link>
+                                        <NavLink to="/transactions" className="nav-link">
+                                            Transactions
+                                        </NavLink>
                                     </li>
-
                                     <li className={active === "send-request" ? "active" : ""}>
-                                        <Link to="/send-money">Gửi / Yêu cầu thanh toán</Link>
+                                        <NavLink to="/send-money" className="nav-link">
+                                            Send / Request
+                                        </NavLink>
                                     </li>
-
                                     <li className={active === "help" ? "active" : ""}>
-                                        <Link to="/help">Trợ giúp</Link>
+                                        <NavLink to="/help" className="nav-link">
+                                            Help
+                                        </NavLink>
                                     </li>
                                 </ul>
                             </div>
                         </nav>
                     </div>
 
-                    {/* Bên phải: ngôn ngữ + thông báo + hồ sơ */}
+                    {/* RIGHT: language + notifications + profile */}
                     <div className="header-column justify-content-end">
                         <nav className="login-signup navbar navbar-expand">
                             <ul className="navbar-nav">
-                                {/* Ngôn ngữ */}
-                                <li className="dropdown language">
-                                    <a className="dropdown-toggle" href="#!" data-bs-toggle="dropdown">
+                                {/* Language dropdown */}
+                                <li
+                                    className={`dropdown language ${langOpen ? "show" : ""}`}
+                                >
+                                    <a
+                                        href="#!"
+                                        className="dropdown-toggle"
+                                        onClick={toggleLang}
+                                    >
                                         VN
                                     </a>
-                                    <ul className="dropdown-menu">
+                                    <ul
+                                        className={`dropdown-menu${langOpen ? " show" : ""}`}
+                                    >
                                         <li>
-                                            <a className="dropdown-item" href="#!">
+                                            <a href="#!" className="dropdown-item">
                                                 Tiếng Việt
                                             </a>
                                         </li>
                                         <li>
-                                            <a className="dropdown-item" href="#!">
+                                            <a href="#!" className="dropdown-item">
                                                 English
                                             </a>
                                         </li>
                                     </ul>
                                 </li>
 
-                                {/* Thông báo */}
-                                <li className="dropdown notifications">
+                                {/* Notifications dropdown */}
+                                <li
+                                    className={`dropdown notifications ${notifOpen ? "show" : ""
+                                        }`}
+                                >
                                     <a
-                                        className="dropdown-toggle"
                                         href="#!"
-                                        data-bs-toggle="dropdown"
+                                        className="dropdown-toggle"
+                                        onClick={toggleNotif}
                                     >
                                         <span className="text-5">
-                                            <i className="far fa-bell"></i>
+                                            <i className="far fa-bell" />
                                         </span>
                                         <span className="count">3</span>
                                     </a>
-                                    <ul className="dropdown-menu">
-                                        <li className="text-center text-3 py-2">Thông báo (3)</li>
-                                        <li className="dropdown-divider mx-n3"></li>
-
+                                    <ul
+                                        className={`dropdown-menu${notifOpen ? " show" : ""}`}
+                                        style={{ right: 0, left: "auto" }}
+                                    >
+                                        <li className="text-center text-3 py-2">
+                                            Notifications (3)
+                                        </li>
+                                        <li className="dropdown-divider mx-n3" />
                                         <li>
-                                            <a className="dropdown-item" href="#!">
-                                                <i className="fas fa-bell"></i> Có tài liệu FIRC mới
+                                            <a href="#!" className="dropdown-item">
+                                                <i className="fas fa-bell" />
+                                                A new digital FIRC document is available for you to
+                                                download
                                                 <span className="text-1 text-muted d-block">
-                                                    22 Tháng 7 2021
+                                                    22 Jul 2021
                                                 </span>
                                             </a>
                                         </li>
-
                                         <li>
-                                            <a className="dropdown-item" href="#!">
-                                                <i className="fas fa-bell"></i> Cập nhật chính sách bảo mật
+                                            <a href="#!" className="dropdown-item">
+                                                <i className="fas fa-bell" />
+                                                Updates to our privacy policy. Please read.
                                                 <span className="text-1 text-muted d-block">
-                                                    04 Tháng 3 2021
+                                                    04 March 2021
                                                 </span>
                                             </a>
                                         </li>
-
                                         <li>
-                                            <a className="dropdown-item" href="#!">
-                                                <i className="fas fa-bell"></i> Cập nhật phí Payyed
+                                            <a href="#!" className="dropdown-item">
+                                                <i className="fas fa-bell" />
+                                                Update about Payyed fees
                                                 <span className="text-1 text-muted d-block">
-                                                    18 Tháng 2 2021
+                                                    18 Feb 2021
                                                 </span>
                                             </a>
                                         </li>
-
-                                        <li className="dropdown-divider mx-n3"></li>
+                                        <li className="dropdown-divider mx-n3" />
                                         <li>
                                             <Link
                                                 to="/notifications"
                                                 className="dropdown-item text-center text-primary px-0"
                                             >
-                                                Xem tất cả
+                                                See all Notifications
                                             </Link>
                                         </li>
                                     </ul>
                                 </li>
 
-                                {/* Hồ sơ */}
-                                <li className="dropdown profile ms-2">
+                                {/* Profile dropdown – giống CSS cũ */}
+                                <li
+                                    className={`dropdown profile ms-2 ${profileOpen ? "show" : ""
+                                        }`}
+                                >
                                     <a
-                                        className="px-0 dropdown-toggle"
                                         href="#!"
-                                        data-bs-toggle="dropdown"
+                                        className="px-0 dropdown-toggle"
+                                        onClick={toggleProfile}
                                     >
                                         <img
                                             className="rounded-circle"
                                             src="/images/profile-thumb-sm.jpg"
-                                            alt="Hồ sơ"
+                                            alt="Profile"
                                         />
                                     </a>
-
-                                    <ul className="dropdown-menu">
+                                    <ul
+                                        className={`dropdown-menu${profileOpen ? " show" : ""}`}
+                                        style={{ right: 0, left: "auto" }}
+                                    >
                                         <li className="text-center text-3 py-2">
-                                            Xin chào, Smith Rhodes
+                                            Hi, Smith Rhodes
                                         </li>
-                                        <li className="dropdown-divider mx-n3"></li>
-
+                                        <li className="dropdown-divider mx-n3" />
                                         <li>
-                                            <Link
-                                                className="dropdown-item"
-                                                to="/settings-profile"
-                                            >
-                                                <i className="fas fa-user"></i> Hồ sơ cá nhân
+                                            <Link className="dropdown-item" to="/settings-profile">
+                                                <i className="fas fa-user me-2" />
+                                                My Profile
                                             </Link>
                                         </li>
-
                                         <li>
-                                            <Link
-                                                className="dropdown-item"
-                                                to="/settings-security"
-                                            >
-                                                <i className="fas fa-shield-alt"></i> Bảo mật
+                                            <Link className="dropdown-item" to="/settings-security">
+                                                <i className="fas fa-shield-alt me-2" />
+                                                Security
                                             </Link>
                                         </li>
-
                                         <li>
                                             <Link
                                                 className="dropdown-item"
                                                 to="/settings-payment-methods"
                                             >
-                                                <i className="fas fa-credit-card"></i> Phương thức thanh toán
+                                                <i className="fas fa-credit-card me-2" />
+                                                Payment Methods
                                             </Link>
                                         </li>
-
                                         <li>
                                             <Link
                                                 className="dropdown-item"
                                                 to="/settings-notifications"
                                             >
-                                                <i className="fas fa-bell"></i> Cài đặt thông báo
+                                                <i className="fas fa-bell me-2" />
+                                                Notifications
                                             </Link>
                                         </li>
-
-                                        <li className="dropdown-divider mx-n3"></li>
-
+                                        <li className="dropdown-divider mx-n3" />
                                         <li>
-                                            <Link className="dropdown-item" to="/logout">
-                                                <i className="fas fa-sign-out-alt"></i> Đăng xuất
+                                            <Link className="dropdown-item" to="/help">
+                                                <i className="fas fa-life-ring me-2" />
+                                                Need Help?
                                             </Link>
+                                        </li>
+                                        <li>
+                                            <a
+                                                href="#!"
+                                                className="dropdown-item text-danger"
+                                                onClick={handleLogout}
+                                            >
+                                                <i className="fas fa-sign-out-alt me-2" />
+                                                Sign Out
+                                            </a>
                                         </li>
                                     </ul>
                                 </li>

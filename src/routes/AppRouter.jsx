@@ -21,6 +21,7 @@ import SettingsProfilePage from "../pages/SettingsProfilePage.jsx";
 import SettingsSecurityPage from "../pages/SettingsSecurityPage.jsx";
 import SettingsPaymentMethodsPage from "../pages/SettingsPaymentMethodsPage.jsx";
 import SettingsNotificationsPage from "../pages/SettingsNotificationsPage.jsx";
+import PrivateRoute from "./PrivateRoute.jsx";
 
 const AppRouter = () => {
     return (
@@ -34,17 +35,17 @@ const AppRouter = () => {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/contact-us" element={<ContactUsPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/transactions" element={<TransactionsPage />} />
-            <Route path="/send-money" element={<SendMoneyPage />} />
-            <Route path="/request-money" element={<RequestMoneyPage />} />
-            <Route path="/deposit-money" element={<DepositMoneyPage />} />
-            <Route path="/withdraw-money" element={<WithdrawMoneyPage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/settings-profile" element={<SettingsProfilePage />} />
-            <Route path="/settings-security" element={<SettingsSecurityPage />} />
-            <Route path="/settings-payment-methods" element={<SettingsPaymentMethodsPage />} />
-            <Route path="/settings-notifications" element={<SettingsNotificationsPage />} />
+            <Route path="/dashboard" element={<PrivateRoute> <DashboardPage /> </PrivateRoute>} />
+            <Route path="/transactions" element={<PrivateRoute> <TransactionsPage /> </PrivateRoute>} />
+            <Route path="/send-money" element={<PrivateRoute> <SendMoneyPage /> </PrivateRoute>} />
+            <Route path="/request-money" element={<PrivateRoute> <RequestMoneyPage /> </PrivateRoute>} />
+            <Route path="/deposit-money" element={<PrivateRoute> <DepositMoneyPage /> </PrivateRoute>} />
+            <Route path="/withdraw-money" element={<PrivateRoute> <WithdrawMoneyPage /> </PrivateRoute>} />
+            <Route path="/notifications" element={<PrivateRoute> <NotificationsPage /> </PrivateRoute>} />
+            <Route path="/settings-profile" element={<PrivateRoute> <SettingsProfilePage /> </PrivateRoute>} />
+            <Route path="/settings-security" element={<PrivateRoute> <SettingsSecurityPage /> </PrivateRoute>} />
+            <Route path="/settings-payment-methods" element={<PrivateRoute> <SettingsPaymentMethodsPage /> </PrivateRoute>} />
+            <Route path="/settings-notifications" element={<PrivateRoute> <SettingsNotificationsPage /> </PrivateRoute>} />
             <Route path="*" element={<Error404Page />} />
         </Routes>
     );

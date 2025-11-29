@@ -10,3 +10,5 @@ export const login = (data) => {
     // data: { email, password }
     return api.post("/api/auth/login", data);
 };
+
+export const getMe = () => api.get("/api/auth/me");

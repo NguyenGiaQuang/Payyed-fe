@@ -1,13 +1,61 @@
-import React from "react";
+// src/pages/SettingsProfilePage.jsx
+import React, { useEffect, useState } from "react";
 import DashboardHeader from "../components/layout/DashboardHeader.jsx";
 import DashboardSidebar from "../components/dashboard/DashboardSidebar.jsx";
 import SettingsSecondNavigation from "../components/navigation/SettingsSecondNavigation.jsx";
 import Footer from "../components/layout/Footer.jsx";
+import { getMe } from "../api/auth";
+
+// Hàm nhỏ để format "2002-05-20" -> "20-05-2002"
+const formatDate = (iso) => {
+    if (!iso) return "";
+    const [year, month, day] = iso.split("-");
+    return `${day}-${month}-${year}`;
+};
 
 const SettingsProfilePage = () => {
+    const [data, setData] = useState({
+        user: null,
+        customer: null,
+        roles: [],
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                setLoading(true);
+                const res = await getMe();
+                // res.data có dạng { user, customer, roles }
+                setData(res.data);
+            } catch (err) {
+                console.error(err);
+                const msg =
+                    err.response?.data?.message ||
+                    err.response?.data?.error ||
+                    "Không tải được thông tin hồ sơ.";
+                setError(msg);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProfile();
+    }, []);
+
+    const { user, customer, roles } = data;
+
+    const fullName = customer?.full_name || "—";
+    const dob = customer?.dob ? formatDate(customer.dob) : "—";
+    const address = customer?.address || "—";
+    const email = user?.email || "—";
+    const isActive = user?.is_active;
+    const kycStatus = customer?.kyc || "PENDING";
+
     return (
         <div id="main-wrapper">
-            <DashboardHeader />
+            <DashboardHeader active="settings" />
             <SettingsSecondNavigation />
 
             <div id="content" className="py-4">
@@ -16,6 +64,16 @@ const SettingsProfilePage = () => {
                         <DashboardSidebar />
 
                         <div className="col-lg-9">
+                            {/* Thông báo loading / lỗi */}
+                            {loading && (
+                                <div className="alert alert-info py-2">
+                                    Đang tải thông tin hồ sơ...
+                                </div>
+                            )}
+                            {error && (
+                                <div className="alert alert-danger py-2">{error}</div>
+                            )}
+
                             {/* THÔNG TIN CÁ NHÂN */}
                             <div className="bg-white shadow-sm rounded p-4 mb-4">
                                 <h3 className="text-5 fw-400 d-flex align-items-center mb-4">
@@ -33,38 +91,47 @@ const SettingsProfilePage = () => {
                                 </h3>
                                 <hr className="mx-n4 mb-4" />
 
-                                <div className="row gx-3 align-items-center">
+                                <div className="row gx-3 align-items-center mb-2">
                                     <p className="col-sm-3 text-muted text-sm-end mb-0 mb-sm-3">
                                         Họ và tên:
                                     </p>
-                                    <p className="col-sm-9 text-3">Smith Rhodes</p>
+                                    <p className="col-sm-9 text-3">{fullName}</p>
+                                </div>
+
+                                <div className="row gx-3 align-items-center mb-2">
+                                    <p className="col-sm-3 text-muted text-sm-end mb-0 mb-sm-3">
+                                        Ngày sinh:
+                                    </p>
+                                    <p className="col-sm-9 text-3">{dob}</p>
+                                </div>
+
+                                <div className="row gx-3 align-items-center mb-2">
+                                    <p className="col-sm-3 text-muted text-sm-end mb-0 mb-sm-3">
+                                        Địa chỉ:
+                                    </p>
+                                    <p className="col-sm-9 text-3">{address}</p>
                                 </div>
 
                                 <div className="row gx-3 align-items-center">
                                     <p className="col-sm-3 text-muted text-sm-end mb-0 mb-sm-3">
-                                        Ngày sinh:
-                                    </p>
-                                    <p className="col-sm-9 text-3">12-09-1982</p>
-                                </div>
-
-                                <div className="row gx-3 align-items-baseline">
-                                    <p className="col-sm-3 text-muted text-sm-end mb-0 mb-sm-3">
-                                        Địa chỉ:
+                                        Trạng thái KYC:
                                     </p>
                                     <p className="col-sm-9 text-3">
-                                        Tầng 4, Lô số 22, phía trên Công viên công cộng, 145 Murphy
-                                        Canyon Rd, Suite 100-18,
-                                        <br />
-                                        San Ditego,
-                                        <br />
-                                        California - 22434,
-                                        <br />
-                                        Hoa Kỳ.
+                                        <span
+                                            className={`badge rounded-pill px-3 py-1 ${kycStatus === "APPROVED"
+                                                    ? "bg-success"
+                                                    : kycStatus === "REJECTED"
+                                                        ? "bg-danger"
+                                                        : "bg-warning text-dark"
+                                                }`}
+                                        >
+                                            {kycStatus}
+                                        </span>
                                     </p>
                                 </div>
                             </div>
 
-                            {/* Modal chỉnh sửa thông tin cá nhân */}
+                            {/* Modal chỉnh sửa thông tin cá nhân – vẫn là mock, chưa connect API update */}
                             <div
                                 id="edit-personal-details"
                                 className="modal fade"
@@ -74,7 +141,9 @@ const SettingsProfilePage = () => {
                                 <div className="modal-dialog modal-dialog-centered">
                                     <div className="modal-content">
                                         <div className="modal-header">
-                                            <h5 className="modal-title fw-400">Thông tin cá nhân</h5>
+                                            <h5 className="modal-title fw-400">
+                                                Thông tin cá nhân
+                                            </h5>
                                             <button
                                                 type="button"
                                                 className="btn-close"
@@ -83,131 +152,10 @@ const SettingsProfilePage = () => {
                                             />
                                         </div>
                                         <div className="modal-body p-4">
-                                            <form id="personaldetails" method="post">
-                                                <div className="row g-3">
-                                                    <div className="col-sm-6">
-                                                        <label htmlFor="firstName" className="form-label">
-                                                            Tên
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            defaultValue="Smith"
-                                                            className="form-control"
-                                                            id="firstName"
-                                                            required
-                                                        />
-                                                    </div>
-                                                    <div className="col-sm-6">
-                                                        <label htmlFor="lastName" className="form-label">
-                                                            Họ
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            defaultValue="Rhodes"
-                                                            className="form-control"
-                                                            id="lastName"
-                                                            required
-                                                        />
-                                                    </div>
-                                                    <div className="col-12">
-                                                        <label htmlFor="birthDate" className="form-label">
-                                                            Ngày sinh
-                                                        </label>
-                                                        <div className="position-relative">
-                                                            <input
-                                                                id="birthDate"
-                                                                type="text"
-                                                                className="form-control"
-                                                                defaultValue="12-09-1982"
-                                                            />
-                                                            <span className="icon-inside">
-                                                                <i className="fas fa-calendar-alt" />
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <h3 className="text-5 fw-400 mt-4">Địa chỉ</h3>
-                                                <hr />
-
-                                                <div className="row g-3">
-                                                    <div className="col-12">
-                                                        <label htmlFor="address" className="form-label">
-                                                            Địa chỉ
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            className="form-control"
-                                                            id="address"
-                                                            defaultValue="4th Floor, Plot No.22, Above Public Park"
-                                                        />
-                                                    </div>
-
-                                                    <div className="col-sm-6">
-                                                        <label htmlFor="city" className="form-label">
-                                                            Thành phố
-                                                        </label>
-                                                        <input
-                                                            id="city"
-                                                            type="text"
-                                                            className="form-control"
-                                                            defaultValue="San Ditego"
-                                                        />
-                                                    </div>
-
-                                                    <div className="col-sm-6">
-                                                        <label htmlFor="input-zone" className="form-label">
-                                                            Bang / Tỉnh
-                                                        </label>
-                                                        <select
-                                                            className="form-select"
-                                                            id="input-zone"
-                                                            name="zone_id"
-                                                            defaultValue="3624"
-                                                        >
-                                                            <option value="">--- Chọn ---</option>
-                                                            <option value="3613">Alabama</option>
-                                                            <option value="3624">California</option>
-                                                            {/* ...các bang khác... */}
-                                                        </select>
-                                                    </div>
-
-                                                    <div className="col-sm-6">
-                                                        <label htmlFor="zipCode" className="form-label">
-                                                            Mã bưu điện
-                                                        </label>
-                                                        <input
-                                                            id="zipCode"
-                                                            type="text"
-                                                            className="form-control"
-                                                            defaultValue="22434"
-                                                        />
-                                                    </div>
-
-                                                    <div className="col-sm-6">
-                                                        <label htmlFor="inputCountry" className="form-label">
-                                                            Quốc gia
-                                                        </label>
-                                                        <select
-                                                            className="form-select"
-                                                            id="inputCountry"
-                                                            name="country_id"
-                                                            defaultValue="223"
-                                                        >
-                                                            <option value="">--- Chọn ---</option>
-                                                            <option value="223">United States</option>
-                                                            <option value="230">Viet Nam</option>
-                                                            {/* ...các quốc gia khác... */}
-                                                        </select>
-                                                    </div>
-
-                                                    <div className="col-12 mt-4 d-grid">
-                                                        <button className="btn btn-primary" type="submit">
-                                                            Lưu thay đổi
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </form>
+                                            {/* TODO: sau này nối API update profile */}
+                                            <p className="text-muted mb-0">
+                                                Chức năng chỉnh sửa hồ sơ sẽ được kết nối API sau.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -234,7 +182,9 @@ const SettingsProfilePage = () => {
                                     <p className="col-sm-3 text-muted text-sm-end mb-0 mb-sm-3">
                                         Ngôn ngữ:
                                     </p>
-                                    <p className="col-sm-9 text-3">English (United States)</p>
+                                    <p className="col-sm-9 text-3">
+                                        Tiếng Việt (Vietnamese)
+                                    </p>
                                 </div>
 
                                 <div className="row gx-3 align-items-center">
@@ -242,7 +192,7 @@ const SettingsProfilePage = () => {
                                         Múi giờ:
                                     </p>
                                     <p className="col-sm-9 text-3">
-                                        (GMT-06:00) Central America
+                                        (GMT+07:00) Bangkok, Hanoi, Jakarta
                                     </p>
                                 </div>
 
@@ -251,15 +201,20 @@ const SettingsProfilePage = () => {
                                         Trạng thái tài khoản:
                                     </p>
                                     <p className="col-sm-9 text-3">
-                                        <span className="bg-success text-white rounded-pill d-inline-block px-2">
+                                        <span
+                                            className={`rounded-pill d-inline-block px-2 ${isActive
+                                                    ? "bg-success text-white"
+                                                    : "bg-danger text-white"
+                                                }`}
+                                        >
                                             <i className="fas fa-check-circle me-1" />
-                                            Đang hoạt động
+                                            {isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
                                         </span>
                                     </p>
                                 </div>
                             </div>
 
-                            {/* Modal cài đặt tài khoản */}
+                            {/* Modal cài đặt tài khoản – vẫn mock */}
                             <div
                                 id="edit-account-settings"
                                 className="modal fade"
@@ -280,81 +235,10 @@ const SettingsProfilePage = () => {
                                             />
                                         </div>
                                         <div className="modal-body p-4">
-                                            <form id="accountSettings" method="post">
-                                                <div className="row g-3">
-                                                    <div className="col-12">
-                                                        <label htmlFor="language" className="form-label">
-                                                            Ngôn ngữ
-                                                        </label>
-                                                        <select
-                                                            className="form-select"
-                                                            id="language"
-                                                            defaultValue="1"
-                                                        >
-                                                            <option value="1">
-                                                                English (United States)
-                                                            </option>
-                                                            <option value="2">Tiếng Tây Ban Nha</option>
-                                                            <option value="3">Tiếng Trung</option>
-                                                            <option value="4">Tiếng Nga</option>
-                                                        </select>
-                                                    </div>
-
-                                                    <div className="col-12">
-                                                        <label
-                                                            htmlFor="input-timezone"
-                                                            className="form-label"
-                                                        >
-                                                            Múi giờ
-                                                        </label>
-                                                        <select
-                                                            className="form-select"
-                                                            id="input-timezone"
-                                                            defaultValue="-6"
-                                                        >
-                                                            <option value="-12">
-                                                                (GMT-12:00) International Date Line West
-                                                            </option>
-                                                            <option value="-10">
-                                                                (GMT-10:00) Hawaii
-                                                            </option>
-                                                            <option value="-8">
-                                                                (GMT-08:00) Pacific Time (US &amp; Canada)
-                                                            </option>
-                                                            <option value="-6">
-                                                                (GMT-06:00) Central America
-                                                            </option>
-                                                            <option value="7">
-                                                                (GMT+07:00) Bangkok, Hanoi, Jakarta
-                                                            </option>
-                                                            {/* ...múi giờ khác... */}
-                                                        </select>
-                                                    </div>
-
-                                                    <div className="col-12">
-                                                        <label
-                                                            htmlFor="accountStatus"
-                                                            className="form-label"
-                                                        >
-                                                            Trạng thái tài khoản
-                                                        </label>
-                                                        <select
-                                                            className="form-select"
-                                                            id="accountStatus"
-                                                            defaultValue="1"
-                                                        >
-                                                            <option value="1">Đang hoạt động</option>
-                                                            <option value="2">Ngừng hoạt động</option>
-                                                        </select>
-                                                    </div>
-
-                                                    <div className="col-12 d-grid mt-4">
-                                                        <button className="btn btn-primary" type="submit">
-                                                            Lưu thay đổi
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </form>
+                                            <p className="text-muted mb-0">
+                                                Cài đặt tài khoản (ngôn ngữ, múi giờ, trạng thái) hiện
+                                                đang để mặc định; sẽ được kết nối API cấu hình sau.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -382,22 +266,15 @@ const SettingsProfilePage = () => {
                                         Email:
                                     </p>
                                     <p className="col-sm-9 text-3 d-sm-inline-flex align-items-center">
-                                        smithrhodes1982@gmail.com
+                                        {email}
                                         <span className="badge bg-info text-1 fw-500 rounded-pill px-2 py-1 ms-2">
                                             Chính
                                         </span>
                                     </p>
                                 </div>
-
-                                <div className="row gx-3 align-items-center">
-                                    <p className="col-sm-3 text-muted text-sm-end mb-0 mb-sm-3">
-                                        Email:
-                                    </p>
-                                    <p className="col-sm-9 text-3">smith.rhodes@outlook.com</p>
-                                </div>
                             </div>
 
-                            {/* Modal email */}
+                            {/* Modal email – placeholder */}
                             <div
                                 id="edit-email"
                                 className="modal fade"
@@ -407,7 +284,9 @@ const SettingsProfilePage = () => {
                                 <div className="modal-dialog modal-dialog-centered">
                                     <div className="modal-content">
                                         <div className="modal-header">
-                                            <h5 className="modal-title fw-400">Địa chỉ email</h5>
+                                            <h5 className="modal-title fw-400">
+                                                Địa chỉ email
+                                            </h5>
                                             <button
                                                 type="button"
                                                 className="btn-close"
@@ -416,75 +295,15 @@ const SettingsProfilePage = () => {
                                             />
                                         </div>
                                         <div className="modal-body p-4">
-                                            <form id="emailAddresses" method="post">
-                                                <div className="mb-3">
-                                                    <label
-                                                        htmlFor="emailID"
-                                                        className="form-label d-inline-flex align-items-center"
-                                                    >
-                                                        Email
-                                                        <span className="badge bg-info text-1 fw-500 rounded-pill px-2 py-1 ms-2">
-                                                            Chính
-                                                        </span>
-                                                    </label>
-                                                    <input
-                                                        type="email"
-                                                        className="form-control"
-                                                        id="emailID"
-                                                        defaultValue="smithrhodes1982@gmail.com"
-                                                    />
-                                                </div>
-
-                                                <div className="mb-3">
-                                                    <label htmlFor="emailID2" className="form-label">
-                                                        Email 2 –{" "}
-                                                        <a
-                                                            href="#!"
-                                                            className="btn-link text-uppercase text-1"
-                                                        >
-                                                            Đặt làm chính
-                                                        </a>
-                                                    </label>
-                                                    <div className="input-group">
-                                                        <input
-                                                            type="email"
-                                                            className="form-control"
-                                                            id="emailID2"
-                                                            defaultValue="smith.rhodes@outlook.com"
-                                                        />
-                                                        <a
-                                                            href="#!"
-                                                            className="input-group-text text-muted text-2"
-                                                            data-bs-toggle="tooltip"
-                                                            title="Xoá"
-                                                        >
-                                                            <i className="fas fa-times" />
-                                                        </a>
-                                                    </div>
-                                                </div>
-
-                                                <a
-                                                    href="#!"
-                                                    className="btn-link text-uppercase d-flex align-items-center text-1 float-end mb-3"
-                                                >
-                                                    <span className="text-3 me-1">
-                                                        <i className="fas fa-plus-circle" />
-                                                    </span>
-                                                    Thêm email khác
-                                                </a>
-
-                                                <div className="d-grid">
-                                                    <button className="btn btn-primary" type="submit">
-                                                        Lưu thay đổi
-                                                    </button>
-                                                </div>
-                                            </form>
+                                            <p className="text-muted mb-0">
+                                                Chức năng thay đổi email sẽ được kết nối API sau.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* ĐIỆN THOẠI */}
+                            {/* ĐIỆN THOẠI – tạm giữ nguyên static */}
                             <div className="bg-white shadow-sm rounded p-4 mb-4">
                                 <h3 className="text-5 fw-400 d-flex align-items-center mb-4">
                                     Điện thoại
@@ -521,7 +340,7 @@ const SettingsProfilePage = () => {
                                 </div>
                             </div>
 
-                            {/* Modal điện thoại – rút gọn list mã quốc gia */}
+                            {/* Modal điện thoại – placeholder */}
                             <div
                                 id="edit-phone"
                                 className="modal fade"
@@ -540,81 +359,13 @@ const SettingsProfilePage = () => {
                                             />
                                         </div>
                                         <div className="modal-body p-4">
-                                            <form id="phone" method="post">
-                                                <div className="mb-3">
-                                                    <label
-                                                        htmlFor="mobileNumber"
-                                                        className="form-label d-inline-flex align-items-center"
-                                                    >
-                                                        Di động
-                                                        <span className="badge bg-info text-1 fw-500 rounded-pill px-2 py-1 ms-2">
-                                                            Chính
-                                                        </span>
-                                                    </label>
-                                                    <div className="input-group">
-                                                        <span className="input-group-text p-0">
-                                                            <select
-                                                                className="form-select border-0 bg-transparent"
-                                                                id="selectedCountry1"
-                                                                defaultValue="US,1"
-                                                            >
-                                                                <option value="US,1">US +1</option>
-                                                                <option value="VN,84">VN +84</option>
-                                                            </select>
-                                                        </span>
-                                                        <input
-                                                            type="text"
-                                                            className="form-control"
-                                                            id="mobileNumber"
-                                                            defaultValue="2025550125"
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div className="mb-3">
-                                                    <label
-                                                        htmlFor="mobileNumber2"
-                                                        className="form-label"
-                                                    >
-                                                        Di động 2 –{" "}
-                                                        <a
-                                                            href="#!"
-                                                            className="btn-link text-uppercase text-1"
-                                                        >
-                                                            Đặt làm chính
-                                                        </a>
-                                                    </label>
-                                                    <div className="input-group">
-                                                        <span className="input-group-text p-0">
-                                                            <select
-                                                                className="form-select border-0 bg-transparent"
-                                                                id="selectedCountry2"
-                                                                defaultValue="US,1"
-                                                            >
-                                                                <option value="US,1">US +1</option>
-                                                                <option value="VN,84">VN +84</option>
-                                                            </select>
-                                                        </span>
-                                                        <input
-                                                            type="text"
-                                                            className="form-control"
-                                                            id="mobileNumber2"
-                                                            defaultValue="3036660512"
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div className="d-grid">
-                                                    <button className="btn btn-primary" type="submit">
-                                                        Lưu thay đổi
-                                                    </button>
-                                                </div>
-                                            </form>
+                                            <p className="text-muted mb-0">
+                                                Thay đổi số điện thoại sẽ được hỗ trợ sau.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                         {/* end col-lg-9 */}
                     </div>

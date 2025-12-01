@@ -1,7 +1,60 @@
-import React from "react";
+// src/components/dashboard/DashboardSidebar.jsx
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { getMe } from "../../api/auth";
+import { getDefaultAccount } from "../../api/account";
 
 const DashboardSidebar = () => {
+    const [fullName, setFullName] = useState("");
+    const [balance, setBalance] = useState(null);
+    const [currency, setCurrency] = useState("VND");
+
+    // Format tiền tệ
+    const formatCurrency = (amount, curr) => {
+        if (amount == null) return "--";
+        try {
+            return Number(amount).toLocaleString("vi-VN", {
+                style: "currency",
+                currency: curr || "VND",
+            });
+        } catch {
+            return `${amount} ${curr || "VND"}`;
+        }
+    };
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const res = await getMe();
+                const data = res.data || res; // phòng trường hợp wrapper
+                const name =
+                    data.customer?.full_name ||
+                    data.user?.email ||
+                    "Khách hàng";
+                setFullName(name);
+            } catch (err) {
+                console.error("Lỗi lấy thông tin người dùng:", err);
+            }
+        };
+
+        const fetchDefaultAccount = async () => {
+            try {
+                const acc = await getDefaultAccount();
+                // backend có thể trả { account: {...} } hoặc object trực tiếp
+                const account = acc.account || acc;
+                if (account) {
+                    setBalance(account.balance);
+                    setCurrency(account.currency || "VND");
+                }
+            } catch (err) {
+                console.error("Lỗi lấy tài khoản mặc định:", err);
+            }
+        };
+
+        fetchUser();
+        fetchDefaultAccount();
+    }, []);
+
     return (
         <aside className="col-lg-3">
             {/* Thông tin hồ sơ */}
@@ -33,7 +86,9 @@ const DashboardSidebar = () => {
                     </div>
                 </div>
 
-                <p className="text-3 fw-500 mb-2">Xin chào, Smith Rhodes</p>
+                <p className="text-3 fw-500 mb-2">
+                    Xin chào, {fullName || "khách hàng"}
+                </p>
 
                 <p className="mb-2">
                     <Link className="btn-link text-2" to="/settings-profile">
@@ -47,7 +102,11 @@ const DashboardSidebar = () => {
                 <div className="text-17 text-primary my-3">
                     <i className="fas fa-wallet"></i>
                 </div>
-                <h3 className="text-9 fw-400">$2,956.00</h3>
+                <h3 className="text-9 fw-400">
+                    {balance === null
+                        ? "--"
+                        : formatCurrency(balance, currency)}
+                </h3>
                 <p className="mb-2 text-muted opacity-75">Số dư khả dụng</p>
 
                 <hr className="mx-n3" />

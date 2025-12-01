@@ -26,3 +26,8 @@ export const createAccount = async ({ customer_id, account_no }) => {
     });
     return res.data;
 };
+
+export const getDefaultAccount = async () => {
+    const res = await api.get("/api/accounts/default");
+    return res.data.account || res.data;
+};

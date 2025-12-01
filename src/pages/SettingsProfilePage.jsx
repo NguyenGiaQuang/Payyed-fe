@@ -6,6 +6,8 @@ import SettingsSecondNavigation from "../components/navigation/SettingsSecondNav
 import Footer from "../components/layout/Footer.jsx";
 import { getMe } from "../api/auth";
 import { updateCustomer } from "../api/customer";
+import { getMyKyc, submitKyc } from "../api/kyc";
+import { uploadKycFile } from "../api/upload";
 
 // Hiển thị "2002-05-20" -> "20-05-2002"
 const formatDisplayDate = (iso) => {
@@ -34,6 +36,26 @@ const SettingsProfilePage = () => {
     const [editSaving, setEditSaving] = useState(false);
     const [editError, setEditError] = useState("");
 
+    // --- state cho KYC ---
+    const [kycInfo, setKycInfo] = useState(null);
+    const [kycLoading, setKycLoading] = useState(false);
+    const [kycError, setKycError] = useState("");
+    const [showKycModal, setShowKycModal] = useState(false);
+    const [kycForm, setKycForm] = useState({
+        customer_id: "",
+    });
+    const [kycFiles, setKycFiles] = useState({
+        cccd_front: null,
+        selfie: null,
+    });
+    const [kycSaving, setKycSaving] = useState(false);
+    const [kycSubmitError, setKycSubmitError] = useState("");
+    const [kycSubmitSuccess, setKycSubmitSuccess] = useState("");
+
+    // --- state cho modal xem ảnh KYC ---
+    const [previewImageUrl, setPreviewImageUrl] = useState("");
+    const [showPreviewModal, setShowPreviewModal] = useState(false);
+
     useEffect(() => {
         const fetchProfile = async () => {
             try {
@@ -55,16 +77,49 @@ const SettingsProfilePage = () => {
         fetchProfile();
     }, []);
 
+    // Lấy hồ sơ KYC bằng GET /api/kyc/me để hiển thị tài liệu KYC đã gửi
+    useEffect(() => {
+        const fetchKyc = async () => {
+            try {
+                setKycLoading(true);
+                const res = await getMyKyc(); // GET http://localhost:5000/api/kyc/me
+                setKycInfo(res.data);
+            } catch (err) {
+                console.error(err);
+                if (err.response?.status === 404) {
+                    // Chưa có hồ sơ KYC
+                    setKycInfo(null);
+                } else {
+                    const msg =
+                        err.response?.data?.message ||
+                        err.response?.data?.error ||
+                        "Không tải được hồ sơ KYC.";
+                    setKycError(msg);
+                }
+            } finally {
+                setKycLoading(false);
+            }
+        };
+
+        fetchKyc();
+    }, []);
+
     const { user, customer } = data;
     const fullName = customer?.full_name || "—";
     const dobDisplay = customer?.dob ? formatDisplayDate(customer.dob) : "—";
     const address = customer?.address || "—";
     const nationalId = customer?.national_id || "—";
-    const email = user?.email || "—";
     const isActive = user?.is_active;
     const kycStatus = customer?.kyc || "PENDING";
 
-    // Mở modal và fill form từ dữ liệu hiện tại
+    // Helper: lấy URL tài liệu KYC hiện tại theo doc_type
+    const getExistingDocUrl = (docType) => {
+        if (!kycInfo || !Array.isArray(kycInfo.kyc_documents)) return "";
+        const doc = kycInfo.kyc_documents.find((d) => d.doc_type === docType);
+        return doc?.url || "";
+    };
+
+    // Mở modal chỉnh sửa thông tin cá nhân
     const handleOpenEdit = () => {
         if (customer) {
             setEditForm({
@@ -88,22 +143,19 @@ const SettingsProfilePage = () => {
         setEditForm((prev) => ({ ...prev, [name]: value }));
     };
 
-    // Gọi API cập nhật customer
     const handleEditSubmit = async (e) => {
         e.preventDefault();
         setEditSaving(true);
         setEditError("");
 
         try {
-            // Gọi API cập nhật bằng axios, token đã được interceptor gắn sẵn
             const res = await updateCustomer({
                 full_name: editForm.full_name,
-                dob: editForm.dob,           // YYYY-MM-DD
+                dob: editForm.dob, // YYYY-MM-DD
                 national_id: editForm.national_id,
                 address: editForm.address,
             });
 
-            // Nếu backend trả về customer mới:
             const updatedCustomer = res.data?.customer || {
                 ...(customer || {}),
                 ...editForm,
@@ -127,7 +179,171 @@ const SettingsProfilePage = () => {
         }
     };
 
+    // ====== KYC handlers ======
 
+    const handleOpenKycModal = async () => {
+        try {
+            const res = await getMyKyc();
+            setKycInfo(res.data);
+        } catch (err) {
+            console.error(err);
+            if (err.response?.status === 404) {
+                setKycInfo(null);
+            }
+        }
+
+        const customerId = kycInfo?.id || customer?.id || "";
+        setKycForm({
+            customer_id: customerId,
+        });
+        setKycFiles({
+            cccd_front: null,
+            selfie: null,
+        });
+        setKycSubmitError("");
+        setKycSubmitSuccess("");
+        setShowKycModal(true);
+    };
+
+    const handleCloseKycModal = () => {
+        if (kycSaving) return;
+        setShowKycModal(false);
+    };
+
+    const handleKycFormChange = (e) => {
+        const { name, value } = e.target;
+        setKycForm((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleKycFileChange = (e) => {
+        const { name, files } = e.target;
+        const file = files && files[0] ? files[0] : null;
+
+        setKycFiles((prev) => ({
+            ...prev,
+            [name]: file,
+        }));
+    };
+
+    // 🔧 SỬA TẠI ĐÂY: luôn refetch GET /api/kyc/me sau khi submit thành công
+    const handleKycSubmit = async (e) => {
+        e.preventDefault();
+        setKycSaving(true);
+        setKycSubmitError("");
+        setKycSubmitSuccess("");
+
+        try {
+            if (!kycForm.customer_id) {
+                throw new Error("Vui lòng nhập Customer ID.");
+            }
+
+            const documents = [];
+            const existingDocs = Array.isArray(kycInfo?.kyc_documents)
+                ? kycInfo.kyc_documents
+                : [];
+
+            // Xử lý CCCD_FRONT
+            if (kycFiles.cccd_front) {
+                const resUpload = await uploadKycFile(
+                    kycFiles.cccd_front,
+                    "CCCD_FRONT"
+                );
+                const url = resUpload.data?.url;
+                if (!url) {
+                    throw new Error("Không lấy được URL ảnh CCCD mặt trước từ server.");
+                }
+                documents.push({
+                    doc_type: "CCCD_FRONT",
+                    url,
+                });
+            } else {
+                const old = existingDocs.find((d) => d.doc_type === "CCCD_FRONT");
+                if (old) {
+                    documents.push({
+                        doc_type: "CCCD_FRONT",
+                        url: old.url,
+                    });
+                }
+            }
+
+            // Xử lý SELFIE
+            if (kycFiles.selfie) {
+                const resUpload = await uploadKycFile(kycFiles.selfie, "SELFIE");
+                const url = resUpload.data?.url;
+                if (!url) {
+                    throw new Error("Không lấy được URL ảnh selfie từ server.");
+                }
+                documents.push({
+                    doc_type: "SELFIE",
+                    url,
+                });
+            } else {
+                const old = existingDocs.find((d) => d.doc_type === "SELFIE");
+                if (old) {
+                    documents.push({
+                        doc_type: "SELFIE",
+                        url: old.url,
+                    });
+                }
+            }
+
+            if (documents.length === 0) {
+                throw new Error(
+                    "Chưa có tài liệu KYC nào. Vui lòng chọn ít nhất một ảnh để gửi."
+                );
+            }
+
+            const payload = {
+                customer_id: kycForm.customer_id,
+                documents,
+            };
+
+            // Gửi hồ sơ KYC
+            await submitKyc(payload);
+
+            setKycSubmitSuccess("Gửi / cập nhật hồ sơ KYC thành công.");
+
+            // 🔁 Luôn refetch lại từ GET /api/kyc/me để có dữ liệu đúng format
+            try {
+                const refetch = await getMyKyc();
+                setKycInfo(refetch.data);
+            } catch (err2) {
+                console.error("Lỗi khi refetch KYC sau submit:", err2);
+            }
+
+            setKycFiles({
+                cccd_front: null,
+                selfie: null,
+            });
+
+            setTimeout(() => {
+                setShowKycModal(false);
+            }, 800);
+        } catch (err) {
+            console.error(err);
+            const msg =
+                err.response?.data?.message ||
+                err.response?.data?.error ||
+                err.message ||
+                "Có lỗi xảy ra khi gửi hồ sơ KYC.";
+            setKycSubmitError(msg);
+        } finally {
+            setKycSaving(false);
+        }
+    };
+
+    // Xem ảnh KYC trong modal
+    const handleOpenPreview = (url) => {
+        setPreviewImageUrl(url);
+        setShowPreviewModal(true);
+    };
+
+    const handleClosePreview = () => {
+        setShowPreviewModal(false);
+        setPreviewImageUrl("");
+    };
+
+    // --------- RENDER ---------
     return (
         <div id="main-wrapper">
             <DashboardHeader active="settings" />
@@ -139,7 +355,6 @@ const SettingsProfilePage = () => {
                         <DashboardSidebar />
 
                         <div className="col-lg-9">
-                            {/* Thông báo loading / lỗi */}
                             {loading && (
                                 <div className="alert alert-info py-2">
                                     Đang tải thông tin hồ sơ...
@@ -201,16 +416,106 @@ const SettingsProfilePage = () => {
                                     <p className="col-sm-9 text-3">
                                         <span
                                             className={`badge rounded-pill px-3 py-1 ${kycStatus === "APPROVED"
-                                                ? "bg-success"
-                                                : kycStatus === "REJECTED"
-                                                    ? "bg-danger"
-                                                    : "bg-warning text-dark"
+                                                    ? "bg-success"
+                                                    : kycStatus === "REJECTED"
+                                                        ? "bg-danger"
+                                                        : "bg-warning text-dark"
                                                 }`}
                                         >
                                             {kycStatus}
                                         </span>
                                     </p>
                                 </div>
+                            </div>
+
+                            {/* HỒ SƠ KYC */}
+                            <div className="bg-white shadow-sm rounded p-4 mb-4">
+                                <h3 className="text-5 fw-400 d-flex align-items-center mb-4">
+                                    Hồ sơ KYC
+                                    <button
+                                        type="button"
+                                        onClick={handleOpenKycModal}
+                                        className="ms-auto text-2 text-uppercase btn-link border-0 bg-transparent p-0"
+                                    >
+                                        <span className="me-1">
+                                            <i className="fas fa-upload" />
+                                        </span>
+                                        Gửi / Cập nhật
+                                    </button>
+                                </h3>
+                                <hr className="mx-n4 mb-4" />
+
+                                {kycLoading && (
+                                    <div className="alert alert-info py-2">
+                                        Đang tải hồ sơ KYC...
+                                    </div>
+                                )}
+                                {kycError && (
+                                    <div className="alert alert-danger py-2">{kycError}</div>
+                                )}
+
+                                {!kycLoading && !kycError && !kycInfo && (
+                                    <p className="text-3 mb-0">
+                                        Bạn chưa có hồ sơ KYC. Vui lòng nhấn &quot;Gửi / Cập nhật&quot;
+                                        để bổ sung tài liệu.
+                                    </p>
+                                )}
+
+                                {kycInfo && (
+                                    <div className="mt-3">
+                                        {kycInfo.kyc === "PENDING" ? (
+                                            <p className="text-3 mb-0">
+                                                Hồ sơ KYC của bạn đang chờ xác nhận. Vui lòng quay lại
+                                                sau khi hệ thống hoặc quản trị viên phê duyệt.
+                                            </p>
+                                        ) : (
+                                            <>
+                                                <h4 className="text-4 fw-400 mb-3">Tài liệu KYC</h4>
+
+                                                {Array.isArray(kycInfo.kyc_documents) &&
+                                                    kycInfo.kyc_documents.length > 0 ? (
+                                                    <ul className="list-unstyled mb-0">
+                                                        {kycInfo.kyc_documents.map((doc) => (
+                                                            <li
+                                                                key={doc.id}
+                                                                className="d-flex align-items-center justify-content-between py-2 border-bottom"
+                                                            >
+                                                                <div>
+                                                                    <div className="fw-500">
+                                                                        {doc.doc_type === "CCCD_FRONT"
+                                                                            ? "Ảnh CCCD mặt trước"
+                                                                            : doc.doc_type === "SELFIE"
+                                                                                ? "Ảnh selfie"
+                                                                                : doc.doc_type}
+                                                                    </div>
+                                                                    <div className="text-muted text-2">
+                                                                        Tải lên:{" "}
+                                                                        {doc.uploaded_at
+                                                                            ? new Date(
+                                                                                doc.uploaded_at
+                                                                            ).toLocaleString("vi-VN")
+                                                                            : ""}
+                                                                    </div>
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-sm btn-outline-primary"
+                                                                    onClick={() => handleOpenPreview(doc.url)}
+                                                                >
+                                                                    Xem ảnh
+                                                                </button>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                ) : (
+                                                    <p className="text-3 mb-0">
+                                                        Chưa có tài liệu KYC nào được tải lên.
+                                                    </p>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* CÀI ĐẶT TÀI KHOẢN */}
@@ -253,8 +558,8 @@ const SettingsProfilePage = () => {
                                     <p className="col-sm-9 text-3">
                                         <span
                                             className={`rounded-pill d-inline-block px-2 ${isActive
-                                                ? "bg-success text-white"
-                                                : "bg-danger text-white"
+                                                    ? "bg-success text-white"
+                                                    : "bg-danger text-white"
                                                 }`}
                                         >
                                             <i className="fas fa-check-circle me-1" />
@@ -264,7 +569,7 @@ const SettingsProfilePage = () => {
                                 </div>
                             </div>
 
-                            {/* ĐIỆN THOẠI – giữ nguyên static */}
+                            {/* ĐIỆN THOẠI – demo tĩnh */}
                             <div className="bg-white shadow-sm rounded p-4 mb-4">
                                 <h3 className="text-5 fw-400 d-flex align-items-center mb-4">
                                     Điện thoại
@@ -308,7 +613,7 @@ const SettingsProfilePage = () => {
 
             <Footer />
 
-            {/* MODAL CHỈNH SỬA THÔNG TIN CÁ NHÂN – dùng state showEditModal */}
+            {/* MODAL CHỈNH SỬA THÔNG TIN CÁ NHÂN */}
             {showEditModal && (
                 <>
                     <div
@@ -398,7 +703,176 @@ const SettingsProfilePage = () => {
                             </div>
                         </div>
                     </div>
-                    {/* backdrop */}
+                    <div className="modal-backdrop fade show" />
+                </>
+            )}
+
+            {/* MODAL GỬI / CẬP NHẬT HỒ SƠ KYC */}
+            {showKycModal && (
+                <>
+                    <div
+                        className="modal fade show"
+                        role="dialog"
+                        style={{ display: "block" }}
+                        aria-modal="true"
+                    >
+                        <div className="modal-dialog modal-dialog-centered" role="document">
+                            <div className="modal-content">
+                                <div className="modal-header">
+                                    <h5 className="modal-title fw-400">Gửi / Cập nhật hồ sơ KYC</h5>
+                                    <button
+                                        type="button"
+                                        className="btn-close"
+                                        onClick={handleCloseKycModal}
+                                        aria-label="Đóng"
+                                    />
+                                </div>
+                                <div className="modal-body p-4">
+                                    <form onSubmit={handleKycSubmit}>
+                                        <div className="mb-3">
+                                            <label className="form-label">Customer ID</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                name="customer_id"
+                                                value={kycForm.customer_id}
+                                                onChange={handleKycFormChange}
+                                                placeholder="Nhập customer_id"
+                                                required
+                                            />
+                                            <small className="form-text text-muted">
+                                                Mặc định lấy từ hồ sơ KYC / khách hàng hiện tại, chỉ chỉnh nếu
+                                                được admin cung cấp ID khác.
+                                            </small>
+                                        </div>
+
+                                        {/* Trường chọn ảnh CCCD mặt trước */}
+                                        <div className="mb-3">
+                                            <label className="form-label">
+                                                Ảnh CCCD mặt trước (CCCD_FRONT)
+                                            </label>
+
+                                            {getExistingDocUrl("CCCD_FRONT") && (
+                                                <div className="mb-2">
+                                                    <div className="text-muted text-2 mb-1">
+                                                        Ảnh hiện tại:
+                                                    </div>
+                                                    <img
+                                                        src={getExistingDocUrl("CCCD_FRONT")}
+                                                        alt="CCCD hiện tại"
+                                                        className="img-fluid rounded border"
+                                                        style={{ maxHeight: "150px", objectFit: "cover" }}
+                                                    />
+                                                </div>
+                                            )}
+
+                                            <input
+                                                type="file"
+                                                className="form-control"
+                                                name="cccd_front"
+                                                accept="image/*"
+                                                onChange={handleKycFileChange}
+                                            />
+                                            <small className="form-text text-muted">
+                                                Chọn ảnh mới nếu muốn thay thế. Nếu để trống, hệ thống sẽ giữ
+                                                nguyên ảnh hiện tại (nếu đã có).
+                                            </small>
+                                        </div>
+
+                                        {/* Trường chọn ảnh SELFIE */}
+                                        <div className="mb-3">
+                                            <label className="form-label">Ảnh selfie (SELFIE)</label>
+
+                                            {getExistingDocUrl("SELFIE") && (
+                                                <div className="mb-2">
+                                                    <div className="text-muted text-2 mb-1">
+                                                        Ảnh hiện tại:
+                                                    </div>
+                                                    <img
+                                                        src={getExistingDocUrl("SELFIE")}
+                                                        alt="Selfie hiện tại"
+                                                        className="img-fluid rounded border"
+                                                        style={{ maxHeight: "150px", objectFit: "cover" }}
+                                                    />
+                                                </div>
+                                            )}
+
+                                            <input
+                                                type="file"
+                                                className="form-control"
+                                                name="selfie"
+                                                accept="image/*"
+                                                onChange={handleKycFileChange}
+                                            />
+                                            <small className="form-text text-muted">
+                                                Chọn ảnh mới nếu muốn thay thế. Nếu để trống, hệ thống sẽ giữ
+                                                nguyên ảnh hiện tại (nếu đã có).
+                                            </small>
+                                        </div>
+
+                                        {kycSubmitError && (
+                                            <div className="alert alert-danger py-2">
+                                                {kycSubmitError}
+                                            </div>
+                                        )}
+                                        {kycSubmitSuccess && (
+                                            <div className="alert alert-success py-2">
+                                                {kycSubmitSuccess}
+                                            </div>
+                                        )}
+
+                                        <div className="d-grid mt-3">
+                                            <button
+                                                type="submit"
+                                                className="btn btn-primary"
+                                                disabled={kycSaving}
+                                            >
+                                                {kycSaving ? "Đang gửi..." : "Gửi / Cập nhật hồ sơ KYC"}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="modal-backdrop fade show" />
+                </>
+            )}
+
+            {/* MODAL XEM ẢNH KYC */}
+            {showPreviewModal && previewImageUrl && (
+                <>
+                    <div
+                        className="modal fade show"
+                        role="dialog"
+                        style={{ display: "block" }}
+                        aria-modal="true"
+                    >
+                        <div
+                            className="modal-dialog modal-dialog-centered modal-lg"
+                            role="document"
+                        >
+                            <div className="modal-content">
+                                <div className="modal-header">
+                                    <h5 className="modal-title fw-400">Xem tài liệu KYC</h5>
+                                    <button
+                                        type="button"
+                                        className="btn-close"
+                                        onClick={handleClosePreview}
+                                        aria-label="Đóng"
+                                    />
+                                </div>
+                                <div className="modal-body p-3 text-center">
+                                    <img
+                                        src={previewImageUrl}
+                                        alt="Tài liệu KYC"
+                                        className="img-fluid"
+                                        style={{ maxHeight: "70vh", objectFit: "contain" }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div className="modal-backdrop fade show" />
                 </>
             )}

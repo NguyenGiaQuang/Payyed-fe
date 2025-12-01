@@ -264,35 +264,6 @@ const SettingsProfilePage = () => {
                                 </div>
                             </div>
 
-                            {/* EMAIL */}
-                            <div className="bg-white shadow-sm rounded p-4 mb-4">
-                                <h3 className="text-5 fw-400 d-flex align-items-center mb-4">
-                                    Địa chỉ email
-                                    <a
-                                        href="#edit-email"
-                                        data-bs-toggle="modal"
-                                        className="ms-auto text-2 text-uppercase btn-link"
-                                    >
-                                        <span className="me-1">
-                                            <i className="fas fa-edit" />
-                                        </span>
-                                        Chỉnh sửa
-                                    </a>
-                                </h3>
-                                <hr className="mx-n4 mb-4" />
-                                <div className="row gx-3 align-items-center">
-                                    <p className="col-sm-3 text-muted text-sm-end mb-0 mb-sm-3">
-                                        Email:
-                                    </p>
-                                    <p className="col-sm-9 text-3 d-sm-inline-flex align-items-center">
-                                        {email}
-                                        <span className="badge bg-info text-1 fw-500 rounded-pill px-2 py-1 ms-2">
-                                            Chính
-                                        </span>
-                                    </p>
-                                </div>
-                            </div>
-
                             {/* ĐIỆN THOẠI – giữ nguyên static */}
                             <div className="bg-white shadow-sm rounded p-4 mb-4">
                                 <h3 className="text-5 fw-400 d-flex align-items-center mb-4">

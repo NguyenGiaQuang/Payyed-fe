@@ -11,4 +11,14 @@ export const login = (data) => {
     return api.post("/api/auth/login", data);
 };
 
+export const changeEmail = (data) => {
+    // data = { current_password, new_email }
+    return api.patch("/api/auth/email", data);
+};
+
+export const changePassword = (data) => {
+    // data = { current_password, new_password, confirm_password }
+    return api.patch("/api/auth/password", data);
+};
+
 export const getMe = () => api.get("/api/auth/me");

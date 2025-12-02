@@ -104,17 +104,17 @@ const DashboardHeader = ({ active = "dashboard" }) => {
                             <div id="header-nav" className="collapse navbar-collapse show">
                                 <ul className="navbar-nav me-auto">
                                     <li className={active === "dashboard" ? "active" : ""}>
-                                        <NavLink to="/dashboard" className="nav-link">Dashboard</NavLink>
+                                        <NavLink to="/dashboard" className="nav-link">Trang chủ</NavLink>
                                     </li>
                                     <li className={active === "transactions" ? "active" : ""}>
-                                        <NavLink to="/transactions" className="nav-link">Transactions</NavLink>
+                                        <NavLink to="/transactions" className="nav-link">Lịch sử giao dịch</NavLink>
                                     </li>
                                     <li className={active === "send-request" ? "active" : ""}>
-                                        <NavLink to="/send-money" className="nav-link">Send / Request</NavLink>
+                                        <NavLink to="/send-money" className="nav-link">Chuyển tiền</NavLink>
                                     </li>
-                                    <li className={active === "help" ? "active" : ""}>
+                                    {/* <li className={active === "help" ? "active" : ""}>
                                         <NavLink to="/help" className="nav-link">Help</NavLink>
-                                    </li>
+                                    </li> */}
                                 </ul>
                             </div>
                         </nav>

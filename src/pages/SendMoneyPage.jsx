@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import DashboardHeader from "../components/layout/DashboardHeader.jsx";
 import DashboardSidebar from "../components/dashboard/DashboardSidebar.jsx";
-import SecondNavigation from "../components/navigation/SecondNavigation.jsx";
 import Footer from "../components/layout/Footer.jsx";
 
 import { getDefaultAccount } from "../api/account";
@@ -75,7 +74,9 @@ const SendMoneyPage = () => {
                 }
             } catch (err) {
                 console.error(err);
-                setInitError("Không tải được thông tin tài khoản hoặc người dùng.");
+                setInitError(
+                    "Không tải được thông tin tài khoản hoặc người dùng."
+                );
             } finally {
                 setLoadingInit(false);
             }
@@ -138,7 +139,9 @@ const SendMoneyPage = () => {
     const handleVerifyOtpAndTransfer = async (e) => {
         e.preventDefault();
         if (!otpRequestId) {
-            setOtpError("Chưa có yêu cầu OTP hợp lệ. Vui lòng quay lại bước 1.");
+            setOtpError(
+                "Chưa có yêu cầu OTP hợp lệ. Vui lòng quay lại bước 1."
+            );
             return;
         }
         if (!otpCode.trim()) {
@@ -333,8 +336,8 @@ const SendMoneyPage = () => {
                     disabled={processingFeeAndOtp || loadingInit || !!initError}
                 >
                     {processingFeeAndOtp
-                        ? "Đang tính phí & gửi OTP..."
-                        : "Tính phí & gửi OTP"}
+                        ? "Đang xử lý..."
+                        : "Xác nhận"}
                 </button>
             </div>
         </form>
@@ -430,7 +433,10 @@ const SendMoneyPage = () => {
             </div>
             <h3 className="mb-3">Giao dịch thành công!</h3>
             {transferResult && (
-                <div className="border rounded p-3 text-start mx-auto" style={{ maxWidth: "420px" }}>
+                <div
+                    className="border rounded p-3 text-start mx-auto"
+                    style={{ maxWidth: "420px" }}
+                >
                     <p className="mb-1">
                         <strong>Mã giao dịch:</strong> {transferResult.id}
                     </p>
@@ -476,15 +482,14 @@ const SendMoneyPage = () => {
             {/* Header sau đăng nhập */}
             <DashboardHeader active="send-request" />
 
-            {/* Second navigation: Send / Request */}
-            <SecondNavigation active="send" />
+            {/* KHÔNG dùng SecondNavigation nữa – chỉ còn trang gửi tiền */}
 
             {/* CONTENT */}
             <div id="content" className="py-4">
                 <div className="container">
                     {renderStepsBar()}
 
-                    <h2 className="fw-400 text-center mt-3">Gửi tiền</h2>
+                    <h2 className="fw-400 text-center mt-3">Chuyển tiền</h2>
                     <p className="lead text-center mb-4">
                         Chuyển tiền nội bộ an toàn, nhanh chóng.
                     </p>

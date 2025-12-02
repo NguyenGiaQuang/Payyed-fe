@@ -135,7 +135,7 @@ const DashboardSidebar = () => {
                 </p>
 
                 <div className="d-grid">
-                    <Link to="/help" className="btn btn-primary">
+                    <Link to="#" className="btn btn-primary">
                         Liên hệ hỗ trợ
                     </Link>
                 </div>

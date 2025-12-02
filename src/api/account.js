@@ -52,3 +52,14 @@ export const getAccountStatement = async ({ accountId, from, to }) => {
     // Backend trả: { account, filter, opening_balance, closing_balance, items: [...] }
     return res.data;
 };
+
+export const requestCashDeposit = async ({ accountId, amount, description }) => {
+    const res = await api.post("/api/cash-transactions/request", {
+        account_id: accountId,
+        type: "DEPOSIT",
+        amount, // số, ví dụ 500000
+        description,
+    });
+    // Backend trả object request: { id, customer_id, account_id, type, amount, status, ... }
+    return res.data;
+};

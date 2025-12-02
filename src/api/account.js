@@ -42,3 +42,13 @@ export const getRecentTransactions = async ({ accountId, limit = 6 }) => {
     // Backend trả { account, limit, items: [...] }
     return res.data;
 };
+
+export const getAccountStatement = async ({ accountId, from, to }) => {
+    const res = await api.post("/api/accounts/statement", {
+        account_id: accountId,
+        from,
+        to,
+    });
+    // Backend trả: { account, filter, opening_balance, closing_balance, items: [...] }
+    return res.data;
+};

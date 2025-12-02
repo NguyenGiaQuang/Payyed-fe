@@ -63,3 +63,14 @@ export const requestCashDeposit = async ({ accountId, amount, description }) => 
     // Backend trả object request: { id, customer_id, account_id, type, amount, status, ... }
     return res.data;
 };
+
+export const requestCashWithdraw = async ({ accountId, amount, description }) => {
+    const res = await api.post("/api/cash-transactions/request", {
+        account_id: accountId,
+        type: "WITHDRAW",
+        amount, // số, ví dụ 300000
+        description, // "Rút tiền mặt 300k"
+    });
+    // Backend trả object request: { id, customer_id, account_id, type, amount, status, ... }
+    return res.data;
+};

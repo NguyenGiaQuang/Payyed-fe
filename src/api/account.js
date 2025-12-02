@@ -29,5 +29,16 @@ export const createAccount = async ({ customer_id, account_no }) => {
 
 export const getDefaultAccount = async () => {
     const res = await api.get("/api/accounts/default");
+    // Có thể trả { account: {...} } hoặc trả thẳng {...}
     return res.data.account || res.data;
+};
+
+// ===== HOẠT ĐỘNG GẦN ĐÂY CỦA TÀI KHOẢN =====
+export const getRecentTransactions = async ({ accountId, limit = 6 }) => {
+    const res = await api.post("/api/accounts/recent", {
+        account_id: accountId,
+        limit,
+    });
+    // Backend trả { account, limit, items: [...] }
+    return res.data;
 };

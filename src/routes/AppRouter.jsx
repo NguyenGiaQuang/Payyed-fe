@@ -23,6 +23,7 @@ import SettingsPaymentMethodsPage from "../pages/SettingsPaymentMethodsPage.jsx"
 import SettingsNotificationsPage from "../pages/SettingsNotificationsPage.jsx";
 import PrivateRoute from "./PrivateRoute.jsx";
 import AdminPage from "../pages/AdminPage.jsx";
+import KycReviewPage from "../pages/KycReviewPage.jsx";
 
 const AppRouter = () => {
     return (
@@ -48,6 +49,7 @@ const AppRouter = () => {
             <Route path="/settings-payment-methods" element={<PrivateRoute> <SettingsPaymentMethodsPage /> </PrivateRoute>} />
             <Route path="/settings-notifications" element={<PrivateRoute> <SettingsNotificationsPage /> </PrivateRoute>} />
             <Route path="/admin" element={<PrivateRoute> <AdminPage /> </PrivateRoute>} />
+            <Route path="/admin/kyc" element={<PrivateRoute> <KycReviewPage /> </PrivateRoute>} />
 
             <Route path="*" element={<Error404Page />} />
         </Routes>

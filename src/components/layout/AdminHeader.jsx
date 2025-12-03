@@ -40,7 +40,8 @@ const AdminHeader = ({ active = "admin" }) => {
             setNotifications(list.slice(0, 3));
             setUnreadCount(list.filter((n) => !n.is_read).length);
         } catch (err) {
-            // ignore
+            // silently ignore if notifications endpoint not available for admin
+            console.debug("Notifications not available for this role", err);
         }
     };
 

@@ -25,6 +25,7 @@ import PrivateRoute from "./PrivateRoute.jsx";
 import AdminPage from "../pages/AdminPage.jsx";
 import KycReviewPage from "../pages/KycReviewPage.jsx";
 import CashTransactionsReviewPage from "../pages/CashTransactionsReviewPage.jsx";
+import JournalsPage from "../pages/JournalsPage.jsx";
 
 const AppRouter = () => {
     return (
@@ -52,6 +53,7 @@ const AppRouter = () => {
             <Route path="/admin" element={<PrivateRoute> <AdminPage /> </PrivateRoute>} />
             <Route path="/admin/kyc" element={<PrivateRoute> <KycReviewPage /> </PrivateRoute>} />
             <Route path="/admin/requests" element={<PrivateRoute> <CashTransactionsReviewPage /> </PrivateRoute>} />
+            <Route path="/admin/transactions" element={<PrivateRoute> <JournalsPage /> </PrivateRoute>} />
 
             <Route path="*" element={<Error404Page />} />
         </Routes>

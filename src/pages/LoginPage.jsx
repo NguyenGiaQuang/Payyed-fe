@@ -1,6 +1,8 @@
+// src/pages/LoginPage.jsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { login as loginApi } from "../api/auth";
+import { login as loginApi, getMe } from "../api/auth";
+import { saveToken } from "../utils/auth";
 
 const LoginPage = () => {
     const navigate = useNavigate();
@@ -23,11 +25,8 @@ const LoginPage = () => {
         try {
             setLoading(true);
 
-            // GỌI API ĐĂNG NHẬP
+            // 1. GỌI API ĐĂNG NHẬP
             const res = await loginApi({ email, password });
-
-            // Backend response:
-            // { token: "..." }
             const token = res.data?.token;
 
             if (!token) {
@@ -35,11 +34,46 @@ const LoginPage = () => {
                 return;
             }
 
-            // Lưu token vào localStorage
-            localStorage.setItem("authToken", token);
+            // 2. LƯU TOKEN
+            saveToken(token);
 
-            // Điều hướng sang Dashboard
-            navigate("/dashboard");
+            // 3. GỌI /api/auth/me ĐỂ LẤY ROLE
+            const meRes = await getMe();
+            const meData = meRes.data || {};
+
+            // Chuẩn hoá roles từ nhiều dạng trả về khác nhau
+            let roles = [];
+            if (Array.isArray(meData.roles) && meData.roles.length > 0) {
+                roles = meData.roles;
+            } else if (meData.role) {
+                // backend có thể trả về role đơn lẻ
+                roles = [meData.role];
+            } else if (Array.isArray(meData)) {
+                roles = meData;
+            }
+
+            // Log ra để bạn dễ debug nếu cần
+            console.log("Roles từ /api/auth/me:", roles);
+
+            // Chuẩn hoá về UPPERCASE để so sánh
+            const normalizedRoles = roles.map((r) => String(r).toUpperCase());
+
+            // Xác định có phải admin/staff hay không:
+            // - Chỉ cần role chứa "ADMIN" hoặc "STAFF" là coi như user quản trị
+            const isAdminOrStaff = normalizedRoles.some(
+                (r) => r.includes("ADMIN") || r.includes("STAFF")
+            );
+
+            // Lưu token và optional thông tin user trả về từ /me
+            saveToken(token, meData);
+
+            if (isAdminOrStaff) {
+                // Trang dành cho admin/staff
+                navigate("/admin");
+            } else {
+                // Khách hàng bình thường
+                navigate("/dashboard");
+            }
         } catch (err) {
             console.log(err);
             const msg =
@@ -79,7 +113,9 @@ const LoginPage = () => {
 
                                 <div className="row g-0 my-auto">
                                     <div className="col-10 col-lg-9 mx-auto">
-                                        <h1 className="text-11 text-white mb-4">Chào mừng quay trở lại!</h1>
+                                        <h1 className="text-11 text-white mb-4">
+                                            Chào mừng quay trở lại!
+                                        </h1>
                                         <p className="text-4 text-white lh-base mb-5">
                                             Gửi tiền, nhận tiền và thanh toán an toàn chỉ với vài thao tác.
                                         </p>
@@ -94,7 +130,6 @@ const LoginPage = () => {
                         <div className="container my-4">
                             <div className="row g-0">
                                 <div className="col-11 col-lg-9 col-xl-8 mx-auto">
-
                                     <h3 className="fw-400 mb-4">Đăng nhập</h3>
 
                                     {/* Lỗi */}
@@ -128,8 +163,15 @@ const LoginPage = () => {
                                         <div className="row mb-3">
                                             <div className="col-sm">
                                                 <div className="form-check form-check-inline">
-                                                    <input className="form-check-input" id="remember-me" type="checkbox" />
-                                                    <label className="form-check-label" htmlFor="remember-me">
+                                                    <input
+                                                        className="form-check-input"
+                                                        id="remember-me"
+                                                        type="checkbox"
+                                                    />
+                                                    <label
+                                                        className="form-check-label"
+                                                        htmlFor="remember-me"
+                                                    >
                                                         Ghi nhớ đăng nhập
                                                     </label>
                                                 </div>
@@ -142,7 +184,11 @@ const LoginPage = () => {
                                         </div>
 
                                         <div className="d-grid mb-3">
-                                            <button className="btn btn-primary" type="submit" disabled={loading}>
+                                            <button
+                                                className="btn btn-primary"
+                                                type="submit"
+                                                disabled={loading}
+                                            >
                                                 {loading ? "Đang xử lý..." : "Đăng nhập"}
                                             </button>
                                         </div>
@@ -154,7 +200,6 @@ const LoginPage = () => {
                                             Đăng ký ngay
                                         </Link>
                                     </p>
-
                                 </div>
                             </div>
                         </div>

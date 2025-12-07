@@ -570,7 +570,7 @@ const SettingsProfilePage = () => {
                             </div>
 
                             {/* ĐIỆN THOẠI – demo tĩnh */}
-                            <div className="bg-white shadow-sm rounded p-4 mb-4">
+                            {/* <div className="bg-white shadow-sm rounded p-4 mb-4">
                                 <h3 className="text-5 fw-400 d-flex align-items-center mb-4">
                                     Điện thoại
                                     <a
@@ -604,7 +604,7 @@ const SettingsProfilePage = () => {
                                     </p>
                                     <p className="col-sm-9 text-3">+1 303-666-0512</p>
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
                         {/* end col-lg-9 */}
                     </div>

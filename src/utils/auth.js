@@ -1,40 +1,36 @@
 // src/utils/auth.js
 
-export const getToken = () => {
-    return localStorage.getItem("authToken");
-};
+const AUTH_KEY = "bank_logged_in";
+const USER_KEY = "bank_user"; // optional – nếu bạn muốn lưu info user
 
-export const isAuthenticated = () => {
-    return !!getToken();
-};
+// Gọi sau khi login thành công (+ đã gọi /me)
+export function setAuth(userData) {
+    localStorage.setItem(AUTH_KEY, "1");
 
-export const logout = () => {
-    try {
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("authUser"); // nếu sau này bạn lưu thêm thông tin user
-    } catch (e) {
-        console.error("Lỗi khi xoá token:", e);
-    }
-};
-
-// Lưu token vào localStorage và tuỳ chọn lưu thêm thông tin user
-export const saveToken = (token, user = null) => {
-    try {
-        localStorage.setItem("authToken", token);
-        if (user) {
-            // lưu dạng JSON để có thể đọc lại sau
-            localStorage.setItem("authUser", JSON.stringify(user));
+    if (userData) {
+        try {
+            localStorage.setItem(USER_KEY, JSON.stringify(userData));
+        } catch (e) {
+            console.error("Save user failed", e);
         }
-    } catch (e) {
-        console.error("Lỗi khi lưu token:", e);
     }
-};
+}
 
-export const getAuthUser = () => {
+export function clearAuth() {
+    localStorage.removeItem(AUTH_KEY);
+    localStorage.removeItem(USER_KEY);
+}
+
+export function isAuthenticated() {
+    return localStorage.getItem(AUTH_KEY) === "1";
+}
+
+export function getUser() {
+    const raw = localStorage.getItem(USER_KEY);
+    if (!raw) return null;
     try {
-        const raw = localStorage.getItem("authUser");
-        return raw ? JSON.parse(raw) : null;
-    } catch (e) {
+        return JSON.parse(raw);
+    } catch {
         return null;
     }
-};
+}

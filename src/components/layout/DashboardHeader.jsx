@@ -1,8 +1,9 @@
 // src/components/layout/DashboardHeader.jsx
 import React, { useState, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { logout, getToken } from "../../utils/auth";
-import api from "../../api/client";
+import api from "../../api/client";               // chỉnh path tuỳ cấu trúc
+import { logout as logoutApi } from "../../api/auth";
+import { clearAuth } from "../../utils/auth";
 import logo from "../../assets/images/logo.png";
 
 const DashboardHeader = ({ active = "dashboard" }) => {
@@ -82,10 +83,18 @@ const DashboardHeader = ({ active = "dashboard" }) => {
     // =============================
     // 🔹 Logout
     // =============================
-    const handleLogout = (e) => {
+    const handleLogout = async (e) => {
         e.preventDefault();
-        logout();
-        navigate("/login");
+        try {
+            // Gọi POST http://localhost:5000/api/auth/logout
+            await logoutApi();
+        } catch (err) {
+            console.error("Logout failed", err);
+        } finally {
+            // Dọn local flag + chuyển về login
+            clearAuth();
+            navigate("/login");
+        }
     };
 
     return (

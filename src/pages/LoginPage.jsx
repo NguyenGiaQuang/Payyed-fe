@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login as loginApi, getMe } from "../api/auth";
-import { saveToken } from "../utils/auth";
+import { setAuth } from "../utils/auth"; // hàm mới để đánh dấu đã đăng nhập
 
 const LoginPage = () => {
     const navigate = useNavigate();
@@ -25,53 +25,36 @@ const LoginPage = () => {
         try {
             setLoading(true);
 
-            // 1. GỌI API ĐĂNG NHẬP
-            const res = await loginApi({ email, password });
-            const token = res.data?.token;
+            // 1. GỌI API ĐĂNG NHẬP -> backend set cookie "token"
+            await loginApi({ email, password });
 
-            if (!token) {
-                setError("Không tìm thấy token từ máy chủ.");
-                return;
-            }
-
-            // 2. LƯU TOKEN
-            saveToken(token);
-
-            // 3. GỌI /api/auth/me ĐỂ LẤY ROLE
+            // 2. GỌI /api/auth/me DÙNG COOKIE ĐỂ LẤY THÔNG TIN + ROLE
             const meRes = await getMe();
             const meData = meRes.data || {};
 
-            // Chuẩn hoá roles từ nhiều dạng trả về khác nhau
+            // Chuẩn hóa roles
             let roles = [];
             if (Array.isArray(meData.roles) && meData.roles.length > 0) {
                 roles = meData.roles;
             } else if (meData.role) {
-                // backend có thể trả về role đơn lẻ
                 roles = [meData.role];
             } else if (Array.isArray(meData)) {
                 roles = meData;
             }
 
-            // Log ra để bạn dễ debug nếu cần
             console.log("Roles từ /api/auth/me:", roles);
-
-            // Chuẩn hoá về UPPERCASE để so sánh
             const normalizedRoles = roles.map((r) => String(r).toUpperCase());
-
-            // Xác định có phải admin/staff hay không:
-            // - Chỉ cần role chứa "ADMIN" hoặc "STAFF" là coi như user quản trị
             const isAdminOrStaff = normalizedRoles.some(
                 (r) => r.includes("ADMIN") || r.includes("STAFF")
             );
 
-            // Lưu token và optional thông tin user trả về từ /me
-            saveToken(token, meData);
+            // 3. ĐÁNH DẤU ĐÃ LOGIN (KHÔNG LƯU TOKEN)
+            setAuth(meData);
 
+            // 4. ĐIỀU HƯỚNG
             if (isAdminOrStaff) {
-                // Trang dành cho admin/staff
                 navigate("/admin");
             } else {
-                // Khách hàng bình thường
                 navigate("/dashboard");
             }
         } catch (err) {
@@ -132,7 +115,6 @@ const LoginPage = () => {
                                 <div className="col-11 col-lg-9 col-xl-8 mx-auto">
                                     <h3 className="fw-400 mb-4">Đăng nhập</h3>
 
-                                    {/* Lỗi */}
                                     {error && <div className="alert alert-danger">{error}</div>}
 
                                     <form onSubmit={handleSubmit}>

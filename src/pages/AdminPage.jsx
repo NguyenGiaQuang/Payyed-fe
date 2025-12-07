@@ -58,7 +58,7 @@ export default function AdminPage() {
                                         </Link>
                                     </div>
 
-                                    <div className="col-sm-6 col-md-4">
+                                    {/* <div className="col-sm-6 col-md-4">
                                         <Link to="/admin/debt-balance" className="text-decoration-none">
                                             <div className="border rounded p-4 h-100">
                                                 <div className="text-4 mb-2"><i className="fas fa-file-invoice-dollar" /></div>
@@ -66,7 +66,7 @@ export default function AdminPage() {
                                                 <p className="text-muted mb-0">So sánh nợ phải thu và nợ phải trả, kiểm tra cân đối.</p>
                                             </div>
                                         </Link>
-                                    </div>
+                                    </div> */}
                                 </div>
                             </div>
                         </div>

@@ -8,6 +8,29 @@ const api = axios.create({
     withCredentials: true, // ⬅️ bắt buộc nếu dùng cookie
 });
 
+function getCsrfTokenFromCookie() {
+    const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : null;
+}
+
+api.interceptors.request.use(
+    (config) => {
+        const method = (config.method || "get").toLowerCase();
+        const safe = ["get", "head", "options"];
+
+        // Với method nguy hiểm -> đính kèm CSRF token
+        if (!safe.includes(method)) {
+            const csrf = getCsrfTokenFromCookie();
+            if (csrf) {
+                config.headers["X-CSRF-Token"] = csrf;
+            }
+        }
+
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
 api.interceptors.response.use(
     (response) => response,
     (error) => {

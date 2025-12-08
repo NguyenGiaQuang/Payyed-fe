@@ -14,7 +14,6 @@ const SettingsSecurityPage = () => {
     // --- state cho modal đổi email ---
     const [showEmailModal, setShowEmailModal] = useState(false);
     const [emailForm, setEmailForm] = useState({
-        current_password: "",
         new_email: "",
     });
     const [emailSaving, setEmailSaving] = useState(false);
@@ -58,7 +57,6 @@ const SettingsSecurityPage = () => {
     // ====== EMAIL ======
     const openEmailModal = () => {
         setEmailForm({
-            current_password: "",
             new_email: user?.email || "",
         });
         setEmailError("");
@@ -84,7 +82,6 @@ const SettingsSecurityPage = () => {
 
         try {
             const res = await changeEmail({
-                current_password: emailForm.current_password,
                 new_email: emailForm.new_email,
             });
 
@@ -348,20 +345,6 @@ const SettingsSecurityPage = () => {
                                 </div>
                                 <div className="modal-body p-4">
                                     <form onSubmit={handleEmailSubmit}>
-                                        <div className="mb-3">
-                                            <label className="form-label">
-                                                Xác nhận mật khẩu hiện tại
-                                            </label>
-                                            <input
-                                                type="password"
-                                                className="form-control"
-                                                name="current_password"
-                                                value={emailForm.current_password}
-                                                onChange={handleEmailChange}
-                                                placeholder="Nhập mật khẩu hiện tại"
-                                                required
-                                            />
-                                        </div>
                                         <div className="mb-3">
                                             <label className="form-label">Email mới</label>
                                             <input

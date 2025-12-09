@@ -10,7 +10,7 @@ Nguyễn Gia Quang - 22810310438 - Thực hiện tấn công CSRF
 
 Nguyễn Trung Hữu - 22810310367 - Khắc phục và bảo vệ trang web bằng CSRF token + samesite cookies
 
-## 📌 Giới thiệu
+## Giới thiệu
 
 Dự án minh họa cách một ứng dụng web dễ bị **Cross-Site Request Forgery
 (CSRF)** khi không có biện pháp bảo vệ, cũng như cách khắc phục bằng:
@@ -27,7 +27,7 @@ Project bao gồm:\
 
 ------------------------------------------------------------------------
 
-## 🏗 Cấu trúc dự án
+## Cấu trúc dự án
 
     /project
     │── backend
@@ -47,7 +47,7 @@ Project bao gồm:\
 
 ------------------------------------------------------------------------
 
-## 🚀 Cài đặt & Chạy dự án
+## Cài đặt & Chạy dự án
 
 ### 1️⃣ Cài đặt backend
 
@@ -58,7 +58,7 @@ npm run dev
 ```
 
 Backend mặc định chạy tại:\
-👉 **http://localhost:5000**
+ **http://localhost:5000**
 
 ------------------------------------------------------------------------
 
@@ -71,7 +71,7 @@ npm run dev
 ```
 
 Frontend mặc định chạy tại:\
-👉 **http://localhost:5173**
+ **http://localhost:5173**
 
 ------------------------------------------------------------------------
 
@@ -85,9 +85,9 @@ bằng trình duyệt, hoặc dùng live server (VSCode).
 
 ------------------------------------------------------------------------
 
-## 🔥 Demo tấn công CSRF
+## Demo tấn công CSRF
 
-### 🧪 1. Khi CSRF chưa được bảo vệ
+### 1. Khi CSRF chưa được bảo vệ
 
 -   Attacker tạo form ẩn:
 
@@ -105,7 +105,7 @@ bằng trình duyệt, hoặc dùng live server (VSCode).
 
 ## 🛡 Demo fix CSRF
 
-### 🛑 1. Thêm middleware kiểm tra CSRF token
+### 1. Thêm middleware kiểm tra CSRF token
 
 ``` js
 import createError from 'http-errors';
@@ -126,7 +126,7 @@ export function csrfProtection(req, res, next) {
 }
 ```
 
-### 🧠 Giải thích nhanh:
+### Giải thích nhanh:
 
 -   Cookie `csrf_token` → được server gửi về\
 -   Header `x-csrf-token` hoặc `_csrf` trong body → được client gửi lên\
@@ -135,7 +135,7 @@ export function csrfProtection(req, res, next) {
 
 ------------------------------------------------------------------------
 
-## 🔐 Một số API quan trọng
+## Một số API quan trọng
 
   API                        Method   Middleware       Mô tả
   -------------------------- -------- ---------------- --------------
@@ -146,7 +146,7 @@ export function csrfProtection(req, res, next) {
 
 ------------------------------------------------------------------------
 
-## 📘 Yêu cầu môi trường
+## Yêu cầu môi trường
 
 -   Node.js ≥ 18\
 -   NPM ≥ 9\
@@ -174,7 +174,7 @@ Sau khi thực hiện các biện pháp bảo vệ, không cho phép thực hi�
 
 https://drive.google.com/file/d/1izts0QszNgNY1Aqx2VUjUfYRNLqplWGe/view?usp=sharing
 
-## 🏁 Kết luận
+## Kết luận
 
 Dự án giúp hiểu rõ:\
 - Cơ chế CSRF\

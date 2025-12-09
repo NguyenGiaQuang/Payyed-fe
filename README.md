@@ -168,7 +168,7 @@ Email đã bị thay đổi
 ![Demo giao diện](demo_kq/demo4.png)
 
 Sau khi thực hiện các biện pháp bảo vệ, không cho phép thực hiện các request trái phép nữa
-![Demo giao diện](demo_kq/demo4.png)
+![Demo giao diện](demo_kq/demo5.png)
 
 ## Video demo toàn bộ
 

